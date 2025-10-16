@@ -1,0 +1,25 @@
+<h2 class="section-title">Profile</h2>
+
+<div class="grid cols-2">
+  <div class="card">
+    <div class="muted" style="margin-bottom:8px;">Account</div>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;">
+      <div class="muted">Email</div> <div>demo@example.com</div>
+      <div class="muted">Name</div>  <div>Demo User</div>
+      <div class="muted">Role</div>  <div>User</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="muted" style="margin-bottom:8px;">Preferences</div>
+    <form onsubmit="return false;">
+      <label>Theme</label>
+      <select id="theme-select" class="input">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+      <div class="spacer"></div>
+      <button id="save-theme" class="btn" type="button">Save</button>
+    </form>
+  </div>
+</div>
