@@ -1,0 +1,46 @@
+<h2 class="section-title">Exchange</h2>
+
+<div class="card">
+  <p class="muted" style="margin-top:0;">Static exchange form (no backend yet).</p>
+  <div class="grid cols-3">
+    <div>
+      <label>From</label>
+      <select class="input">
+        <option>BTC</option>
+        <option>ETH</option>
+        <option>USDT</option>
+      </select>
+    </div>
+    <div>
+      <label>To</label>
+      <select class="input">
+        <option>USDT</option>
+        <option>BTC</option>
+        <option>ETH</option>
+      </select>
+    </div>
+    <div>
+      <label>Amount</label>
+      <input class="input" type="number" step="any" value="0.1" />
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+  <button class="btn" type="button">Convert</button>
+  <span class="muted" style="margin-left:10px;">Demo only—rates are placeholders.</span>
+</div>
+
+<div class="spacer"></div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <div class="muted" style="margin-bottom:8px;">Recent pairs</div>
+    <div class="badge">BTC/USDT</div>
+    <div class="badge" style="margin-left:6px;">ETH/USDT</div>
+    <div class="badge" style="margin-left:6px;">ETH/BTC</div>
+  </div>
+  <div class="card">
+    <div class="muted" style="margin-bottom:8px;">Notes</div>
+    <p class="muted" style="margin:0;">In Milestone 2 you’ll connect this to the REST API.</p>
+  </div>
+</div>
