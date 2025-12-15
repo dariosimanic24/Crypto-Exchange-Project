@@ -1,0 +1,36 @@
+<h2 class="section-title">Exchange</h2>
+
+<div class="card">
+  <div id="exMsg" class="muted" style="margin-top:0; margin-bottom:10px;"></div>
+
+  <div class="grid cols-4">
+    <div>
+      <label>From</label>
+      <select id="exFrom" class="input"></select>
+      <div id="exFromBal" class="muted" style="margin-top:6px;">Balance:</div>
+    </div>
+
+    <div>
+      <label>To</label>
+      <select id="exTo" class="input"></select>
+      <div id="exToBal" class="muted" style="margin-top:6px;">Balance:</div>
+    </div>
+
+    <div>
+      <label>Amount</label>
+      <input id="exAmount" class="input" type="number" step="any" value="0.01" />
+      <div class="muted" style="margin-top:6px;">Amount in FROM currency</div>
+    </div>
+
+    <div>
+      <label>Rate</label>
+      <input id="exRate" class="input" type="number" step="any" value="1" />
+      <div class="muted" style="margin-top:6px;">Example: 1 BTC = 50000 USDT</div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button id="btnExchange" class="btn" type="button">Convert</button>
+  <span class="muted" style="margin-left:10px;">Uses POST /exchange</span>
+</div>

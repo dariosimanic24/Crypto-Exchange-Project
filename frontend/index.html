@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto Exchange</title>
+
+
+  <link rel="icon" type="image/png" href="assets/logo2.ico" />
+<link rel="shortcut icon" type="image/png" href="assets/logo2.ico" />
+
+
+  <link rel="stylesheet" href="css/spapp.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  
+</head>
+<body>
+
+  <header>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <img src="assets/logo.png" alt="Logo" style="width:32px;height:32px;border-radius:6px;">
+    <div class="brand">Crypto Exchange</div>
+  </div>
+  <nav id="nav">
+  <a id="navHome" href="#home">Home</a>
+
+  <a id="navLogin" href="#login">Login</a>
+  <a id="navRegister" href="#register">Register</a>
+
+  <a id="navDashboard" href="#dashboard">Dashboard</a>
+  <a id="navExchange" href="#exchange">Exchange</a>
+  <a id="navWallets" href="#wallets">Wallets</a>
+  <a id="navOrders" href="#orders">Orders</a>
+  <a id="navTransactions" href="#transactions">Transactions</a>
+  <a id="navProfile" href="#profile">Profile</a>
+  <a id="navCurrencies" href="#currencies">Currencies</a>
+
+
+  <!-- Optional (ako dodaš admin view kasnije) -->
+  <a id="navAdmin" href="#admin" style="display:none;">Admin</a>
+
+  <a id="navLogout" href="#" style="display:none;">Logout</a>
+ <span id="navUserName" class="nav-user" style="display:none; margin-left: 500px;"></span>
+
+
+</nav>
+  </nav>
+</header>
+  <main id="spapp" role="main">
+    <section id="home"         data-load="home.html"></section>
+    <section id="login"        data-load="login.html"></section>
+    <section id="register"     data-load="register.html"></section>
+    <section id="dashboard"    data-load="dashboard.html"></section>
+    <section id="exchange"     data-load="exchange.html"></section>
+    <section id="wallets"      data-load="wallets.html"></section>
+    <section id="orders"       data-load="orders.html"></section>
+    <section id="transactions" data-load="transactions.html"></section>
+    <section id="profile"      data-load="profile.html"></section>
+    <section id="admin"        data-load="admin.html"></section>
+    <section id="currencies" data-load="currencies.html"></section>
+
+
+
+  </main>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/jquery.spapp.min.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
