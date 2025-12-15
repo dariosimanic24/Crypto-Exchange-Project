@@ -1,27 +1,7 @@
 <h2 class="section-title">Wallets</h2>
 
-<div class="grid cols-3">
-  <div class="card">
-    <div class="muted">BTC</div>
-    <div style="font-size:22px;margin-top:6px;">0.012345</div>
-    <div class="spacer"></div>
-    <a class="btn" href="#exchange">Exchange</a>
-    <a class="btn ghost" href="#transactions" style="margin-left:8px;">History</a>
-  </div>
-
-  <div class="card">
-    <div class="muted">ETH</div>
-    <div style="font-size:22px;margin-top:6px;">0.4500</div>
-    <div class="spacer"></div>
-    <a class="btn" href="#exchange">Exchange</a>
-    <a class="btn ghost" href="#transactions" style="margin-left:8px;">History</a>
-  </div>
-
-  <div class="card">
-    <div class="muted">USDT</div>
-    <div style="font-size:22px;margin-top:6px;">1200.00</div>
-    <div class="spacer"></div>
-    <a class="btn" href="#exchange">Exchange</a>
-    <a class="btn ghost" href="#transactions" style="margin-left:8px;">History</a>
-  </div>
+<div class="admin-only" style="margin-bottom:12px; display:none;">
+  <button class="btn" id="btnCreateWallet">+ Create Wallet</button>
 </div>
+
+<div id="walletsList"></div>

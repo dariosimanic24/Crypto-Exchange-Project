@@ -22,15 +22,28 @@
     <div class="brand">Crypto Exchange</div>
   </div>
   <nav id="nav">
-    <a href="#home">Home</a>
-    <a href="#login">Login</a>
-    <a href="#register">Register</a>
-    <a href="#dashboard">Dashboard</a>
-    <a href="#exchange">Exchange</a>
-    <a href="#wallets">Wallets</a>
-    <a href="#orders">Orders</a>
-    <a href="#transactions">Transactions</a>
-    <a href="#profile">Profile</a>
+  <a id="navHome" href="#home">Home</a>
+
+  <a id="navLogin" href="#login">Login</a>
+  <a id="navRegister" href="#register">Register</a>
+
+  <a id="navDashboard" href="#dashboard">Dashboard</a>
+  <a id="navExchange" href="#exchange">Exchange</a>
+  <a id="navWallets" href="#wallets">Wallets</a>
+  <a id="navOrders" href="#orders">Orders</a>
+  <a id="navTransactions" href="#transactions">Transactions</a>
+  <a id="navProfile" href="#profile">Profile</a>
+  <a id="navCurrencies" href="#currencies">Currencies</a>
+
+
+  <!-- Optional (ako dodaš admin view kasnije) -->
+  <a id="navAdmin" href="#admin" style="display:none;">Admin</a>
+
+  <a id="navLogout" href="#" style="display:none;">Logout</a>
+ <span id="navUserName" class="nav-user" style="display:none; margin-left: 500px;"></span>
+
+
+</nav>
   </nav>
 </header>
   <main id="spapp" role="main">
@@ -43,6 +56,11 @@
     <section id="orders"       data-load="orders.html"></section>
     <section id="transactions" data-load="transactions.html"></section>
     <section id="profile"      data-load="profile.html"></section>
+    <section id="admin"        data-load="admin.html"></section>
+    <section id="currencies" data-load="currencies.html"></section>
+
+
+
   </main>
 
   <script src="js/jquery.min.js"></script>

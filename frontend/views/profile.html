@@ -3,10 +3,15 @@
 <div class="grid cols-2">
   <div class="card">
     <div class="muted" style="margin-bottom:8px;">Account</div>
-    <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;">
-      <div class="muted">Email</div> <div>demo@example.com</div>
-      <div class="muted">Name</div>  <div>Demo User</div>
-      <div class="muted">Role</div>  <div>User</div>
+
+    <div id="profileLoading" class="muted">Loading...</div>
+
+    <div id="profileData" style="display:none; grid-template-columns:120px 1fr; gap:8px;">
+      <div class="muted">Email</div> <div id="pfEmail">-</div>
+      <div class="muted">Name</div>  <div id="pfName">-</div>
+      <div class="muted">Role</div>  <div id="pfRole">-</div>
+      <div class="muted">User ID</div> <div id="pfId">-</div>
+      <div class="muted">Created</div> <div id="pfCreated">-</div>
     </div>
   </div>
 

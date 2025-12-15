@@ -13,6 +13,9 @@ use OpenApi\Annotations as OA;
  * )
  */
 Flight::route('GET /wallets', function() {
+    // LOGOVAN USER ili ADMIN može vidjeti
+    Flight::auth_middleware()->requireAuth();
+
     try {
         $data = Flight::walletsService()->get_all();
         Flight::json($data);
@@ -43,6 +46,9 @@ Flight::route('GET /wallets', function() {
  * )
  */
 Flight::route('GET /wallets/@id', function($id) {
+    // LOGOVAN USER ili ADMIN može vidjeti
+    Flight::auth_middleware()->requireAuth();
+
     try {
         $data = Flight::walletsService()->get_by_id($id);
         Flight::json($data);
@@ -72,7 +78,11 @@ Flight::route('GET /wallets/@id', function($id) {
  * )
  */
 Flight::route('POST /wallets', function() {
-    $payload = Flight::request()->data->getData();
+    // SAMO ADMIN može kreirati
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody') ?? Flight::request()->data->getData();
+
     try {
         $data = Flight::walletsService()->add($payload);
         Flight::json($data, 201);
@@ -105,7 +115,11 @@ Flight::route('POST /wallets', function() {
  * )
  */
 Flight::route('PUT /wallets/@id', function($id) {
-    $payload = Flight::request()->data->getData();
+    // SAMO ADMIN može update
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody') ?? Flight::request()->data->getData();
+
     try {
         $data = Flight::walletsService()->update($payload, $id);
         Flight::json($data);
@@ -132,6 +146,9 @@ Flight::route('PUT /wallets/@id', function($id) {
  * )
  */
 Flight::route('DELETE /wallets/@id', function($id) {
+    // SAMO ADMIN može delete
+    Flight::auth_middleware()->requireAdmin();
+
     try {
         $ok = Flight::walletsService()->delete($id);
         Flight::json(['success' => $ok]);
