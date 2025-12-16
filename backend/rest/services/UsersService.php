@@ -58,22 +58,43 @@ class UsersService extends BaseService {
     }
 
     public function add($entity) {
-        $data = $this->validatePayload((array)$entity, false);
+    // Pretvori u array da budemo sigurni
+    $data = (array)$entity;
 
-        /** @var UsersDao $dao */
-        $dao = $this->dao;
-        if ($dao->emailExists($data['email'])) {
-            throw new InvalidArgumentException('Email already exists');
-        }
-
-        $ok = $this->dao->insert($data);
-        if (!$ok) {
-            throw new RuntimeException('Failed to create user');
-        }
-
-        $created = $dao->getByEmail($data['email']);
-        return $this->sanitize($created ?: $data);
+    // Osnovna validacija
+    if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
+        throw new InvalidArgumentException('Name, email and password are required');
     }
+
+    // Ako UsersDao ima getByEmail (po uzoru na projekte sa faksa)
+    if ($this->dao->getByEmail($data['email'])) {
+        throw new InvalidArgumentException('User with this email already exists');
+    }
+
+    // HASH PASSWORDA
+    $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+
+    // ⛔ OVDJE JE BIO PROBLEM:
+    // PRIJЕ JE BILO: $this->dao->add($data);  → UsersDao nema add()
+    // ✔ SADA: koristimo insert(), kao u profesoričinom skeletonu
+    $ok = $this->dao->insert($data);
+
+    if (!$ok) {
+        throw new RuntimeException('Failed to create user');
+    }
+
+    // Ponovo dohvatimo usera iz baze (sa ID-jem itd.)
+    $user = $this->dao->getByEmail($data['email']);
+
+    // Nikad ne vraćamo password
+    if ($user && isset($user['password'])) {
+        unset($user['password']);
+    }
+
+    return $user;
+}
+
+
 
     public function update($entity, $id, $id_column = "id") {
         $data = $this->validatePayload((array)$entity, true);

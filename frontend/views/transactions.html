@@ -1,25 +1,21 @@
 <h2 class="section-title">Transactions</h2>
 
+<div class="admin-only" style="margin-bottom:12px; display:none;">
+  <button class="btn" id="btnCreateTransaction">+ Create Transaction</button>
+</div>
+
 <div class="card">
   <table class="table">
     <thead>
       <tr>
-        <th>Date</th><th>Type</th><th>Currency</th><th>Amount</th><th>Status</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Currency</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th class="admin-only" style="display:none;">Actions</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>2025-09-10</td><td>Deposit</td><td>USDT</td><td>500</td>
-        <td><span class="badge success">Completed</span></td>
-      </tr>
-      <tr>
-        <td>2025-09-12</td><td>Trade</td><td>BTC</td><td>0.005</td>
-        <td><span class="badge">Settled</span></td>
-      </tr>
-      <tr>
-        <td>2025-09-15</td><td>Withdrawal</td><td>USDT</td><td>100</td>
-        <td><span class="badge warn">Pending</span></td>
-      </tr>
-    </tbody>
+    <tbody id="transactionsTbody"></tbody>
   </table>
 </div>

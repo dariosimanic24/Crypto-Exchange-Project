@@ -1,16 +1,16 @@
 <?php
+
 use OpenApi\Annotations as OA;
 
 Flight::route('GET /test-users', function() {
     echo "Users route works!";
 });
 
-
 /**
  * @OA\Get(
  *     path="/users",
  *     tags={"users"},
- *     summary="Get all users",
+ *     summary="Get all users (admin only)",
  *     @OA\Response(
  *         response=200,
  *         description="Returns list of users"
@@ -18,6 +18,9 @@ Flight::route('GET /test-users', function() {
  * )
  */
 Flight::route('GET /users', function() {
+    // samo admin smije gledati sve usere
+    Flight::auth_middleware()->requireAdmin();
+
     try {
         $data = Flight::usersService()->get_all();
         Flight::json($data);
@@ -31,7 +34,7 @@ Flight::route('GET /users', function() {
  * @OA\Get(
  *     path="/users/{id}",
  *     tags={"users"},
- *     summary="Get user by ID",
+ *     summary="Get user by ID (admin only)",
  *     @OA\Parameter(
  *         name="id",
  *         in="path",
@@ -49,19 +52,26 @@ Flight::route('GET /users', function() {
  * )
  */
 Flight::route('GET /users/@id', function($id) {
+    Flight::auth_middleware()->requireAdmin();
+
     try {
         $data = Flight::usersService()->get_by_id($id);
+        if (!$data) {
+            Flight::json(['error' => 'User not found'], 404);
+            return;
+        }
         Flight::json($data);
     } catch (Throwable $e) {
         Flight::halt(400, $e->getMessage());
     }
 });
 
+
 /**
  * @OA\Post(
- *     path="/users",
+ *     path="/users/register",
  *     tags={"users"},
- *     summary="Create a new user",
+ *     summary="Register a new user (guest only)",
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
@@ -73,12 +83,59 @@ Flight::route('GET /users/@id', function($id) {
  *     ),
  *     @OA\Response(
  *         response=201,
- *         description="User created"
+ *         description="User registered"
+ *     )
+ * )
+ */
+Flight::route('POST /users/register', function() {
+    // samo guest smije registraciju
+    Flight::auth_middleware()->requireGuest();
+
+    // prvo pokušaj JSON (RequestValidationMiddleware), fallback na form-data
+    $payload = Flight::get('jsonBody');
+    if ($payload === null) {
+        $payload = Flight::request()->data->getData();
+    }
+
+    try {
+        $data = Flight::usersService()->add($payload); // add već hashira password + uklanja ga iz outputa
+        Flight::json($data, 201);
+    } catch (Throwable $e) {
+        Flight::halt(400, $e->getMessage());
+    }
+});
+
+
+/**
+ * @OA\Post(
+ *     path="/users",
+ *     tags={"users"},
+ *     summary="Create a new user (admin only)",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"name","email","password"},
+ *             @OA\Property(property="name", type="string", example="John Doe"),
+ *             @OA\Property(property="email", type="string", example="john@example.com"),
+ *             @OA\Property(property="password", type="string", example="secret123"),
+ *             @OA\Property(property="is_admin", type="integer", example=0)
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="User created by admin"
  *     )
  * )
  */
 Flight::route('POST /users', function() {
-    $payload = Flight::request()->data->getData();
+    // admin-only CRUD
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody');
+    if ($payload === null) {
+        $payload = Flight::request()->data->getData();
+    }
+
     try {
         $data = Flight::usersService()->add($payload);
         Flight::json($data, 201);
@@ -87,11 +144,12 @@ Flight::route('POST /users', function() {
     }
 });
 
+
 /**
  * @OA\Put(
  *     path="/users/{id}",
  *     tags={"users"},
- *     summary="Update an existing user",
+ *     summary="Update an existing user (admin only)",
  *     @OA\Parameter(
  *         name="id",
  *         in="path",
@@ -102,7 +160,8 @@ Flight::route('POST /users', function() {
  *         required=true,
  *         @OA\JsonContent(
  *             @OA\Property(property="name", type="string", example="Updated Name"),
- *             @OA\Property(property="email", type="string", example="updated@example.com")
+ *             @OA\Property(property="email", type="string", example="updated@example.com"),
+ *             @OA\Property(property="is_admin", type="integer", example=1)
  *         )
  *     ),
  *     @OA\Response(
@@ -112,7 +171,13 @@ Flight::route('POST /users', function() {
  * )
  */
 Flight::route('PUT /users/@id', function($id) {
-    $payload = Flight::request()->data->getData();
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody');
+    if ($payload === null) {
+        $payload = Flight::request()->data->getData();
+    }
+
     try {
         $data = Flight::usersService()->update($payload, $id);
         Flight::json($data);
@@ -121,11 +186,12 @@ Flight::route('PUT /users/@id', function($id) {
     }
 });
 
+
 /**
  * @OA\Delete(
  *     path="/users/{id}",
  *     tags={"users"},
- *     summary="Delete a user",
+ *     summary="Delete a user (admin only)",
  *     @OA\Parameter(
  *         name="id",
  *         in="path",
@@ -139,6 +205,8 @@ Flight::route('PUT /users/@id', function($id) {
  * )
  */
 Flight::route('DELETE /users/@id', function($id) {
+    Flight::auth_middleware()->requireAdmin();
+
     try {
         $ok = Flight::usersService()->delete($id);
         Flight::json(['success' => $ok]);

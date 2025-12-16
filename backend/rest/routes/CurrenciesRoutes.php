@@ -13,6 +13,9 @@ use OpenApi\Annotations as OA;
  * )
  */
 Flight::route('GET /currencies', function() {
+    // LOGOVAN USER ili ADMIN može vidjeti
+    Flight::auth_middleware()->requireAuth();
+
     try {
         $data = Flight::currenciesService()->get_all();
         Flight::json($data);
@@ -43,6 +46,9 @@ Flight::route('GET /currencies', function() {
  * )
  */
 Flight::route('GET /currencies/@id', function($id) {
+    // LOGOVAN USER ili ADMIN može vidjeti
+    Flight::auth_middleware()->requireAuth();
+
     try {
         $data = Flight::currenciesService()->get_by_id($id);
         Flight::json($data);
@@ -72,7 +78,11 @@ Flight::route('GET /currencies/@id', function($id) {
  * )
  */
 Flight::route('POST /currencies', function() {
-    $payload = Flight::request()->data->getData();
+    // SAMO ADMIN može kreirati
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody') ?? Flight::request()->data->getData();
+
     try {
         $data = Flight::currenciesService()->add($payload);
         Flight::json($data, 201);
@@ -106,7 +116,11 @@ Flight::route('POST /currencies', function() {
  * )
  */
 Flight::route('PUT /currencies/@id', function($id) {
-    $payload = Flight::request()->data->getData();
+    // SAMO ADMIN može update
+    Flight::auth_middleware()->requireAdmin();
+
+    $payload = Flight::get('jsonBody') ?? Flight::request()->data->getData();
+
     try {
         $data = Flight::currenciesService()->update($payload, $id);
         Flight::json($data);
@@ -133,6 +147,9 @@ Flight::route('PUT /currencies/@id', function($id) {
  * )
  */
 Flight::route('DELETE /currencies/@id', function($id) {
+    // SAMO ADMIN može delete
+    Flight::auth_middleware()->requireAdmin();
+
     try {
         $ok = Flight::currenciesService()->delete($id);
         Flight::json(['success' => $ok]);
