@@ -1,21 +1,19 @@
 <?php
 class Database {
+    private static $host = 'localhost';
+    private static $port = '3306';              
+    private static $dbName = 'crypto_exchange'; 
+    private static $username = 'root';
+    private static $password = '';
     private static $connection = null;
 
     public static function connect() {
         if (self::$connection === null) {
-
-            $host = getenv('DB_HOST') ?: 'localhost';
-            $port = getenv('DB_PORT') ?: '3306';
-            $db   = getenv('DB_NAME') ?: 'crypto_exchange';
-            $user = getenv('DB_USER') ?: 'root';
-            $pass = getenv('DB_PASSWORD') ?: '';
-
             try {
                 self::$connection = new PDO(
-                    "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4",
-                    $user,
-                    $pass,
+                    "mysql:host=" . self::$host . ";port=" . self::$port . ";dbname=" . self::$dbName,
+                    self::$username,
+                    self::$password,
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
@@ -28,3 +26,4 @@ class Database {
         return self::$connection;
     }
 }
+?>
