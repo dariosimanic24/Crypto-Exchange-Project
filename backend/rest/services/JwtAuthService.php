@@ -6,8 +6,6 @@ class JwtAuthService
 {
     private UsersDao $usersDao;
 
-    // JWT config – SAMO ZA AUTH, nema veze sa bazom
-    private const JWT_SECRET       = 'change_this_super_secret_jwt_key_1234567890';
     private const JWT_ISSUER       = 'crypto-exchange-app';
     private const JWT_TTL_SECONDS  = 86400; // 24h
 
@@ -16,10 +14,14 @@ class JwtAuthService
         $this->usersDao = new UsersDao();
     }
 
+    private static function jwtSecret(): string
+    {
+        $s = getenv('JWT_SECRET');
+        return $s ? $s : 'dev_secret_change_me';
+    }
+
     /**
      * Login user + generate JWT token
-     *
-     * @throws InvalidArgumentException
      */
     public function login(string $email, string $password): array
     {
@@ -28,6 +30,10 @@ class JwtAuthService
 
         if ($email === '' || $password === '') {
             throw new InvalidArgumentException('Email and password are required');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Invalid email format');
         }
 
         $user = $this->usersDao->getByEmail($email);
@@ -39,10 +45,8 @@ class JwtAuthService
             throw new InvalidArgumentException('Invalid email or password');
         }
 
-        // napravi JWT token
         $token = $this->generateToken($user);
 
-        // nikad ne vraćamo password
         unset($user['password']);
 
         return [
@@ -78,7 +82,7 @@ class JwtAuthService
         $signature = hash_hmac(
             'sha256',
             $base64Header . '.' . $base64Payload,
-            self::JWT_SECRET,
+            self::jwtSecret(),
             true
         );
 
@@ -102,7 +106,7 @@ class JwtAuthService
         $signatureCheck = hash_hmac(
             'sha256',
             $headerB64 . '.' . $payloadB64,
-            self::JWT_SECRET,
+            self::jwtSecret(),
             true
         );
 
@@ -119,7 +123,6 @@ class JwtAuthService
             return null;
         }
 
-        // provjera exp
         if (isset($payload['exp']) && time() > (int)$payload['exp']) {
             return null;
         }
@@ -127,9 +130,6 @@ class JwtAuthService
         return $payload;
     }
 
-    /**
-     * Get user data from token (returns sanitized user or null)
-     */
     public function getUserFromToken(string $token): ?array
     {
         $payload = $this->verifyToken($token);
@@ -151,10 +151,6 @@ class JwtAuthService
 
         return $user;
     }
-
-    /* ********************
-     * Helpers
-     * ********************/
 
     private function base64UrlEncode(string $data): string
     {

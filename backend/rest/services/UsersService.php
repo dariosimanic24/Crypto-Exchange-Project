@@ -37,9 +37,10 @@ class UsersService extends BaseService {
             $out['email'] = $email;
         }
 
+        // For CREATE only (not update) validate password
         if (!$isUpdate) {
-            if (empty($data['password']) || strlen($data['password']) < 3) {
-                throw new InvalidArgumentException('Invalid password');
+            if (empty($data['password']) || strlen($data['password']) < 8) {
+                throw new InvalidArgumentException('Password must be at least 8 characters');
             }
             $out['password'] = $data['password'];
         }
@@ -58,43 +59,51 @@ class UsersService extends BaseService {
     }
 
     public function add($entity) {
-    // Pretvori u array da budemo sigurni
-    $data = (array)$entity;
+        // Pretvori u array da budemo sigurni
+        $data = (array)$entity;
 
-    // Osnovna validacija
-    if (empty($data['name']) || empty($data['email']) || empty($data['password'])) {
-        throw new InvalidArgumentException('Name, email and password are required');
+        // Trim inputs
+        $data['name']  = isset($data['name']) ? trim($data['name']) : '';
+        $data['email'] = isset($data['email']) ? trim($data['email']) : '';
+
+        // Osnovna validacija required
+        if ($data['name'] === '' || $data['email'] === '' || empty($data['password'])) {
+            throw new InvalidArgumentException('Name, email and password are required');
+        }
+
+        // Email format
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Invalid email');
+        }
+
+        // Password length
+        if (strlen($data['password']) < 8) {
+            throw new InvalidArgumentException('Password must be at least 8 characters');
+        }
+
+        // Duplicate email check
+        if ($this->dao->getByEmail($data['email'])) {
+            throw new InvalidArgumentException('User with this email already exists');
+        }
+
+        // HASH PASSWORDA
+        $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+
+        // Insert
+        $ok = $this->dao->insert($data);
+
+        if (!$ok) {
+            throw new RuntimeException('Failed to create user');
+        }
+
+        // Return created user (without password)
+        $user = $this->dao->getByEmail($data['email']);
+        if ($user && isset($user['password'])) {
+            unset($user['password']);
+        }
+
+        return $user;
     }
-
-    // Ako UsersDao ima getByEmail (po uzoru na projekte sa faksa)
-    if ($this->dao->getByEmail($data['email'])) {
-        throw new InvalidArgumentException('User with this email already exists');
-    }
-
-    // HASH PASSWORDA
-    $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
-
-    // ⛔ OVDJE JE BIO PROBLEM:
-    // PRIJЕ JE BILO: $this->dao->add($data);  → UsersDao nema add()
-    // ✔ SADA: koristimo insert(), kao u profesoričinom skeletonu
-    $ok = $this->dao->insert($data);
-
-    if (!$ok) {
-        throw new RuntimeException('Failed to create user');
-    }
-
-    // Ponovo dohvatimo usera iz baze (sa ID-jem itd.)
-    $user = $this->dao->getByEmail($data['email']);
-
-    // Nikad ne vraćamo password
-    if ($user && isset($user['password'])) {
-        unset($user['password']);
-    }
-
-    return $user;
-}
-
-
 
     public function update($entity, $id, $id_column = "id") {
         $data = $this->validatePayload((array)$entity, true);
