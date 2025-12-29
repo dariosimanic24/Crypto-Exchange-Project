@@ -1,77 +1,5 @@
 $(function () {
 
-  // ====== API CONFIG ======
-  const API_BASE = "http://localhost/dariofinal/backend";
-
-  // ====== AUTH STORAGE ======
-  function setAuth(token, user) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-  }
-
-  function clearAuth() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  }
-
-  function getToken() {
-    return localStorage.getItem("token");
-  }
-
-  function getUser() {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function isLoggedIn() {
-    return !!getToken();
-  }
-
-  function isAdmin() {
-    const u = getUser();
-    return !!u && Number(u.is_admin) === 1;
-  }
-
-  // ====== API HELPER ======
-  async function apiFetch(path, options = {}) {
-    const token = getToken();
-
-    const headers = Object.assign(
-      { "Content-Type": "application/json" },
-      options.headers || {}
-    );
-
-    if (token) headers["Authorization"] = "Bearer " + token;
-
-    const res = await fetch(API_BASE + path, {
-      ...options,
-      headers
-    });
-
-    const text = await res.text();
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
-
-    if (!res.ok) {
-      // show as much backend error as possible
-      let msg = "HTTP " + res.status;
-      if (data && typeof data === "object") {
-        msg = data.error || data.message || JSON.stringify(data);
-      } else if (typeof data === "string" && data.trim()) {
-        msg = data;
-      }
-      throw new Error(msg);
-    }
-
-    return data;
-  }
-
-  // expose for console debugging
-  window.apiFetch = apiFetch;
-
   // ====== HELPERS ======
   function escapeHtml(str) {
     return String(str ?? "")
@@ -82,19 +10,9 @@ $(function () {
       .replaceAll("'", "&#039;");
   }
 
-  function normalizeArray(res) {
-    if (Array.isArray(res)) return res;
-    if (res && Array.isArray(res.data)) return res.data;
-    if (res && Array.isArray(res.items)) return res.items;
-    if (res && Array.isArray(res.rows)) return res.rows;
-    if (res && Array.isArray(res.result)) return res.result;
-    return [];
-  }
-  window.normalizeArray = normalizeArray;
-
   // ====== ADMIN-ONLY UI TOGGLE ======
   function toggleAdminOnlyUI() {
-    const admin = isAdmin();
+    const admin = AuthService.isAdmin();
 
     document.querySelectorAll(".admin-only").forEach(el => {
       if (!admin) {
@@ -122,7 +40,7 @@ $(function () {
   }
 
   function updateNavByRole() {
-    const logged = isLoggedIn();
+    const logged = AuthService.isLoggedIn();
 
     // Guest
     show("navLogin", !logged);
@@ -139,10 +57,10 @@ $(function () {
     show("navLogout", logged);
 
     // Admin-only nav link
-    show("navAdmin", logged && isAdmin());
+    show("navAdmin", logged && AuthService.isAdmin());
 
     // Username label
-    const user = getUser();
+    const user = AuthService.getUser();
     const nameEl = document.getElementById("navUserName");
     if (nameEl) {
       nameEl.textContent = logged && user ? ("Hi, " + user.name) : "";
@@ -158,17 +76,17 @@ $(function () {
     const guestOnlyRoutes = ["login", "register"];
     const adminRoutes = ["admin"];
 
-    if (protectedRoutes.includes(routeName) && !isLoggedIn()) {
+    if (protectedRoutes.includes(routeName) && !AuthService.isLoggedIn()) {
       window.location.hash = "#login";
       return false;
     }
 
-    if (guestOnlyRoutes.includes(routeName) && isLoggedIn()) {
+    if (guestOnlyRoutes.includes(routeName) && AuthService.isLoggedIn()) {
       window.location.hash = "#dashboard";
       return false;
     }
 
-    if (adminRoutes.includes(routeName) && (!isLoggedIn() || !isAdmin())) {
+    if (adminRoutes.includes(routeName) && (!AuthService.isLoggedIn() || !AuthService.isAdmin())) {
       window.location.hash = "#dashboard";
       return false;
     }
@@ -176,20 +94,29 @@ $(function () {
     return true;
   }
 
-  // ====== AUTH HANDLERS ======
+  // ====== AUTH HANDLERS (with client-side validations) ======
   async function handleLoginSubmit(e) {
     e.preventDefault();
 
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value.trim();
 
+    if (!ValidationService.required(email) || !ValidationService.isEmail(email)) {
+      alert("Please enter a valid email.");
+      return;
+    }
+    if (!ValidationService.required(password)) {
+      alert("Password is required.");
+      return;
+    }
+
     try {
-      const result = await apiFetch("/auth/login", {
+      const result = await ApiService.apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
 
-      setAuth(result.token, result.user);
+      AuthService.setAuth(result.token, result.user);
       updateNavByRole();
       window.location.hash = "#dashboard";
     } catch (err) {
@@ -205,13 +132,25 @@ $(function () {
     const password = document.getElementById("regPassword").value.trim();
     const confirm = document.getElementById("regPassword2").value.trim();
 
+    if (!ValidationService.required(name)) {
+      alert("Name is required.");
+      return;
+    }
+    if (!ValidationService.required(email) || !ValidationService.isEmail(email)) {
+      alert("Please enter a valid email.");
+      return;
+    }
+    if (!ValidationService.minLen(password, 8)) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
     if (password !== confirm) {
       alert("Passwords do not match.");
       return;
     }
 
     try {
-      await apiFetch("/users/register", {
+      await ApiService.apiFetch("/users/register", {
         method: "POST",
         body: JSON.stringify({ name, email, password })
       });
@@ -225,7 +164,7 @@ $(function () {
 
   function handleLogoutClick(e) {
     e.preventDefault();
-    clearAuth();
+    AuthService.clearAuth();
     updateNavByRole();
     window.location.hash = "#home";
   }
@@ -241,7 +180,7 @@ $(function () {
     grid.style.display = "none";
 
     try {
-      const me = await apiFetch("/auth/me", { method: "GET" });
+      const me = await ApiService.apiFetch("/auth/me", { method: "GET" });
 
       const elEmail = document.getElementById("pfEmail");
       const elName = document.getElementById("pfName");
@@ -270,11 +209,11 @@ $(function () {
     info.textContent = "Loading...";
 
     try {
-      const me = await apiFetch("/auth/me", { method: "GET" });
+      const me = await ApiService.apiFetch("/auth/me", { method: "GET" });
 
-      const users = normalizeArray(await apiFetch("/users", { method: "GET" }));
-      const wallets = normalizeArray(await apiFetch("/wallets", { method: "GET" }));
-      const orders = normalizeArray(await apiFetch("/orders", { method: "GET" }));
+      const users = ApiService.normalizeArray(await ApiService.apiFetch("/users", { method: "GET" }));
+      const wallets = ApiService.normalizeArray(await ApiService.apiFetch("/wallets", { method: "GET" }));
+      const orders = ApiService.normalizeArray(await ApiService.apiFetch("/orders", { method: "GET" }));
 
       const uCount = document.getElementById("adminUsersCount");
       const wCount = document.getElementById("adminWalletsCount");
@@ -298,7 +237,7 @@ $(function () {
     tbody.innerHTML = `<tr><td colspan="5" class="muted">Loading...</td></tr>`;
 
     try {
-      const items = normalizeArray(await apiFetch("/currencies", { method: "GET" }));
+      const items = ApiService.normalizeArray(await ApiService.apiFetch("/currencies", { method: "GET" }));
 
       if (items.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="muted">No currencies found.</td></tr>`;
@@ -352,7 +291,7 @@ $(function () {
         return;
       }
 
-      await apiFetch("/currencies", {
+      await ApiService.apiFetch("/currencies", {
         method: "POST",
         body: JSON.stringify({ code, name, decimals })
       });
@@ -383,7 +322,7 @@ $(function () {
 
       if (Object.keys(payload).length === 0) return;
 
-      await apiFetch("/currencies/" + id, {
+      await ApiService.apiFetch("/currencies/" + id, {
         method: "PUT",
         body: JSON.stringify(payload)
       });
@@ -399,7 +338,7 @@ $(function () {
     if (!confirm("Delete currency #" + id + "?")) return;
 
     try {
-      await apiFetch("/currencies/" + id, { method: "DELETE" });
+      await ApiService.apiFetch("/currencies/" + id, { method: "DELETE" });
       alert("Deleted.");
       loadCurrencies();
     } catch (err) {
@@ -422,8 +361,8 @@ $(function () {
     if (msg) msg.textContent = "Loading...";
 
     try {
-      _currenciesCache = normalizeArray(await apiFetch("/currencies", { method: "GET" }));
-      _walletsCache = normalizeArray(await apiFetch("/wallets", { method: "GET" }));
+      _currenciesCache = ApiService.normalizeArray(await ApiService.apiFetch("/currencies", { method: "GET" }));
+      _walletsCache = ApiService.normalizeArray(await ApiService.apiFetch("/wallets", { method: "GET" }));
 
       if (_currenciesCache.length === 0) {
         if (msg) msg.textContent = "No currencies found (API returned empty).";
@@ -491,20 +430,17 @@ $(function () {
     if (msg) msg.textContent = "Executing...";
 
     try {
-      // send both naming styles to match whatever backend expects
       const payload = {
         from_currency_id: fromId,
         to_currency_id: toId,
         amount: amount,
         rate: rate,
-
-        // aliases (some backends use these)
         fromCurrencyId: fromId,
         toCurrencyId: toId,
         exchange_rate: rate
       };
 
-      const res = await apiFetch("/exchange", {
+      const res = await ApiService.apiFetch("/exchange", {
         method: "POST",
         body: JSON.stringify(payload)
       });
@@ -526,7 +462,7 @@ $(function () {
     container.innerHTML = "<div class='muted'>Loading...</div>";
 
     try {
-      const wallets = normalizeArray(await apiFetch("/wallets", { method: "GET" }));
+      const wallets = ApiService.normalizeArray(await ApiService.apiFetch("/wallets", { method: "GET" }));
 
       if (wallets.length === 0) {
         container.innerHTML = "<div class='muted'>No wallets found.</div>";
@@ -579,7 +515,7 @@ $(function () {
         return;
       }
 
-      await apiFetch("/wallets", {
+      await ApiService.apiFetch("/wallets", {
         method: "POST",
         body: JSON.stringify({ user_id, currency_id, balance: isNaN(balance) ? 0 : balance })
       });
@@ -595,7 +531,7 @@ $(function () {
     if (!confirm("Delete wallet #" + id + "?")) return;
 
     try {
-      await apiFetch("/wallets/" + id, { method: "DELETE" });
+      await ApiService.apiFetch("/wallets/" + id, { method: "DELETE" });
       alert("Deleted.");
       loadWallets();
     } catch (err) {
@@ -611,7 +547,7 @@ $(function () {
     tbody.innerHTML = `<tr><td colspan="6" class="muted">Loading...</td></tr>`;
 
     try {
-      const orders = normalizeArray(await apiFetch("/orders", { method: "GET" }));
+      const orders = ApiService.normalizeArray(await ApiService.apiFetch("/orders", { method: "GET" }));
 
       if (orders.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="muted">No orders found.</td></tr>`;
@@ -662,7 +598,7 @@ $(function () {
         return;
       }
 
-      await apiFetch("/orders", {
+      await ApiService.apiFetch("/orders", {
         method: "POST",
         body: JSON.stringify({ user_id, base_currency_id, quote_currency_id, side, price, amount })
       });
@@ -678,7 +614,7 @@ $(function () {
     if (!confirm("Delete order #" + id + "?")) return;
 
     try {
-      await apiFetch("/orders/" + id, { method: "DELETE" });
+      await ApiService.apiFetch("/orders/" + id, { method: "DELETE" });
       alert("Deleted.");
       loadOrders();
     } catch (err) {
@@ -694,7 +630,7 @@ $(function () {
     tbody.innerHTML = `<tr><td colspan="6" class="muted">Loading...</td></tr>`;
 
     try {
-      const txs = normalizeArray(await apiFetch("/transactions", { method: "GET" }));
+      const txs = ApiService.normalizeArray(await ApiService.apiFetch("/transactions", { method: "GET" }));
 
       if (txs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="muted">No transactions found.</td></tr>`;
@@ -743,7 +679,7 @@ $(function () {
         return;
       }
 
-      await apiFetch("/transactions", {
+      await ApiService.apiFetch("/transactions", {
         method: "POST",
         body: JSON.stringify({ wallet_id, type, amount })
       });
@@ -759,7 +695,7 @@ $(function () {
     if (!confirm("Delete transaction #" + id + "?")) return;
 
     try {
-      await apiFetch("/transactions/" + id, { method: "DELETE" });
+      await ApiService.apiFetch("/transactions/" + id, { method: "DELETE" });
       alert("Deleted.");
       loadTransactions();
     } catch (err) {
@@ -872,7 +808,6 @@ $(function () {
     }
   });
 
-  // Protected views
   ["dashboard", "exchange", "wallets", "orders", "transactions", "currencies"].forEach(function (v) {
     app.route({
       view: v,
@@ -899,10 +834,8 @@ $(function () {
 
   $(document).on("click", "#navLogout", handleLogoutClick);
 
-  // Exchange button
   $(document).on("click", "#btnExchange", executeExchange);
 
-  // Admin buttons listeners (delegation)
   $(document).on("click", "#btnCreateWallet", createWallet);
   $(document).on("click", ".btnDeleteWallet", function () {
     deleteWallet($(this).data("id"));
@@ -918,7 +851,6 @@ $(function () {
     deleteTransaction($(this).data("id"));
   });
 
-  // Currencies admin buttons
   $(document).on("click", "#btnCreateCurrency", createCurrency);
   $(document).on("click", ".btnDeleteCurrency", function () {
     deleteCurrency($(this).data("id"));
@@ -932,7 +864,6 @@ $(function () {
     );
   });
 
-  // Update on hash change
   $(window).on("hashchange", function () {
     const route = window.location.hash.replace("#", "") || "home";
     guardRoute(route);
